@@ -1,5 +1,8 @@
 import oscP5.*;
 import netP5.*;
+import java.net.InetAddress;
+InetAddress inet;
+
 OscP5 oscP5;
 NetAddress remote;
 PFont f;
@@ -9,10 +12,21 @@ Face a;
 Face b; 
 boolean settingIp = true;
 String input = "";
+String myIp = ""; 
+
 void setup() {
-  f = createFont("Arial", 12, true);
+  f = createFont("Arial", 18, true);
   size(1200, 480);
   frameRate(30);
+
+
+  try {
+    inet = InetAddress.getLocalHost();
+    myIp = inet.getHostAddress();
+  } 
+  catch (Exception e) {
+    myIp = "???";
+  }
 
 
 
@@ -25,7 +39,7 @@ void setup() {
   b = new Face(500, 0, -7, projsB);
 
   //  remote = new NetAddress("128.2.251.137", 8338);
- 
+
   oscP5 = new OscP5(this, 8338);
 
   oscP5.plug(this, "meshAFound", "/found");
@@ -33,6 +47,8 @@ void setup() {
 
   oscP5.plug(this, "meshBFound", "/foundB");
   oscP5.plug(this, "loadMeshB", "/rawB");
+  
+  oscP5.plug(this, "setB", "/set");
 }
 void update() {
   //  print(projs.size());
@@ -40,7 +56,7 @@ void update() {
     Projectile pA = projsA.get(i);
     pA.update();
     if (b.intersect(pA)) {
-      print("hit!");
+//      print("hit!");
       projsA.remove(i);
     }
     if (pA.getX() > 1200) {
@@ -49,8 +65,18 @@ void update() {
     for (int j = 0; j < projsB.size(); j++) {
       Projectile pB = projsB.get(j);
       if (pA.intersect(pB)) {
-        projsA.remove(i);
-        projsB.remove(j);
+        if (pA.getR() > pB.getR()) {
+          projsB.remove(j);
+          pA.subR(pB.getR());
+        } 
+        else if (pB.getR() > pA.getR()) {
+          projsA.remove(i);
+          pB.subR(pA.getR());
+        } 
+        else {
+          projsA.remove(i);
+          projsB.remove(j);
+        }
       }
     }
   }
@@ -58,7 +84,7 @@ void update() {
     Projectile pB = projsB.get(i);
     pB.update();
     if (a.intersect(pB)) {
-      print("hit!");
+//      print("hit!");
       projsB.remove(i);
       if (pB.getX() < 0) {
         projsB.remove(i);
@@ -66,6 +92,7 @@ void update() {
     }
   }
 }
+
 
 void draw() {
   if (settingIp) {
@@ -75,9 +102,11 @@ void draw() {
     textFont(f);
     fill(0);
     // Display everything
-    text("Please enter the IP address of the other player\n'l' for localhost", indent, 40);
-    text(input, indent, 90);
-//    text(saved, indent, 130);
+    String txt = "Please enter the IP address of the other player\n"+
+      "Your IP address is "+myIp+" \n 'l' for localhost";
+    text(txt, indent, 40);
+    text("->"+input, indent, 150);
+    //    text(saved, indent, 130);
   } 
   else {
 
@@ -90,7 +119,7 @@ void draw() {
       Projectile P = projsA.get(i);
       P.render();
     }
-    println(projsB.size());
+//    println(projsB.size());
     for (int i = 0; i < projsB.size(); i ++) {
       Projectile P = projsB.get(i);
       P.render();
@@ -111,11 +140,15 @@ void keyPressed() {
       remote = new NetAddress(input, 8338);
       //      convert = true;
     }
-//    size(800, 600);
+    //    size(800, 600);
   }
-  else if (key == 'l'){
-    input = "localhost"; 
+  else if (key == ' ') {
+    a.set();
+    OscMessage myMessage = new OscMessage("/set");
+    oscP5.send(myMessage, remote);
   }
-  
+  else if (key == 'l') {
+    input = "localhost";
+  }
 }
 

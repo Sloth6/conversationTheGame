@@ -24,6 +24,10 @@ class Projectile {
     ellipse(x, y, r, r);
   }
   
+  void subR(int r) {
+   this.r -= r; 
+  }
+  
   int getX(){
     return x;
   }

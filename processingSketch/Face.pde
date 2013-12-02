@@ -9,8 +9,15 @@ class Face {
   float natEyebrows = 0.0;
   int fireDelay = 400;
   ArrayList<Projectile> myPrjs;
+  ArrayList<Projectile> myPrjs1;
+  float diff = 0.0;
   int d;
-//  float nat
+  
+  boolean count = true;
+
+  boolean setHappened = false; 
+  float browNormal = 0.0;
+  //  float nat
 
   Face(int x, int y, int d, ArrayList<Projectile> PL) {
     offX = x;
@@ -22,21 +29,34 @@ class Face {
       mesh[i] = new PVector();
     }
   }
+
+  void set() {
+//    h = 
+//    w = sqrt(sq(mesh[0].x-mesh[16].x) + sq(mesh[0].y-mesh[16].y));
+    browNormal = browDis()/h();
+    setHappened = true;
+  }
+  
+  float browDis() {
+   return sqrt(sq(mesh[24].x-mesh[44].x) + sq(mesh[24].y-mesh[44].y));
+  }
+  float h() {
+    return sqrt(sq(mesh[8].x-mesh[27].x) + sq(mesh[8].y-mesh[27].y));
+  }
   
   boolean intersect(Projectile P) {
     int x = P.getX();
     int y = P.getY();
     int r = P.getR();
-    
+
     for (int i = 0; i < 17; i ++) {
       PVector p = mesh[i];
       if (abs(x-int(p.x+offX)) < r/2 && abs(y-int(p.y+offY)) < r/2) {
         health -=5;
-        return true; 
+        return true;
       }
     }
     return false;
-    
   }
 
   void render () {
@@ -46,66 +66,60 @@ class Face {
     for (int i = 0; i < mesh.length-1; i++) {
       PVector p = mesh[i];
       textFont(f);
-//      fill(255);
+      //      fill(255);
 //      text(""+i, p.x+offX, p.y+offY);
-      if(false ){
-         ellipse(500 - p.x, p.y+offY, 5, 5);
-      } else {
+      if (false ) {
+        ellipse(500 - p.x, p.y+offY, 5, 5);
+      } 
+      else {
         ellipse(p.x+offX, p.y+offY, 5, 5);
       }
-      
-//      if (i > 0) {
-//        PVector prev = mesh[i-1];
-//        line(prev.x+offX, prev.y, p.x+offX, p.y+offY);
-//      }
+
+      //      if (i > 0) {
+      //        PVector prev = mesh[i-1];
+      //        line(prev.x+offX, prev.y, p.x+offX, p.y+offY);
+      //      }
     }
   }
   // 24 and 44
-  boolean eyebrowsUp() {
-    print(abs((mesh[24].y - mesh[44].y)/norm));
-    return true;
-//    if(abs((mesh[24].y - mesh[44].y)/norm) > .5) {
-//       return true;
-//    } else {
-//      return false; 
-//    }
-  }
-  boolean mouthOpen() {
-    if(abs(mesh[64].y - mesh[61].y)/norm > .5) {
-       return true;
-    } else {
-      return false; 
-    }
+  int browMag() {
+    return int(((browDis()/h()) - browNormal)*100);
   }
   
+  boolean mouthOpen() {
+    if (abs(mesh[64].y - mesh[61].y)/norm > .5) {
+      return true;
+    } else {
+      return false;
+    }
+  }
+
   void found(int i) {
     found = i == 1;
   }
-  
+
   public void afterMesh() {
+    count = !count;
     int r =0;
     norm = sqrt(sq(mesh[30].x-mesh[27].x) + sq(mesh[30].y-mesh[27].y));
-    if(mouthOpen() && millis()- lastBlob > fireDelay){
+    if (mouthOpen() && millis()- lastBlob > fireDelay) {
       r = abs(int(mesh[64].y-mesh[61].y));
-      myPrjs.add( new Projectile(int(mesh[64].x+mesh[61].x)/2 + offX,
-                                 int(mesh[64].y+mesh[61].y)/2 + offY, r, d,0));
+      myPrjs.add( new Projectile(int(mesh[64].x+mesh[61].x)/2 + offX, 
+      int(mesh[64].y+mesh[61].y)/2 + offY, r, d, -1*browMag()));
       lastBlob = millis();
     }
-    if(eyebrowsUp()){
-       
-    }
-    
+
   }
-  
+
   void init() {
     if (found) {
-      // do stuff here. 
-    } 
+      // do stuff here.
+    }
   }
-  
+
   public void loadMesh(float x0, float y0, float x1, float y1, float x2, float y2, float x3, float y3, float x4, float y4, float x5, float y5, float x6, float y6, float x7, float y7, float x8, float y8, float x9, float y9, float x10, float y10, float x11, float y11, float x12, float y12, float x13, float y13, float x14, float y14, float x15, float y15, float x16, float y16, float x17, float y17, float x18, float y18, float x19, float y19, float x20, float y20, float x21, float y21, float x22, float y22, float x23, float y23, float x24, float y24, float x25, float y25, float x26, float y26, float x27, float y27, float x28, float y28, float x29, float y29, float x30, float y30, float x31, float y31, float x32, float y32, float x33, float y33, float x34, float y34, float x35, float y35, float x36, float y36, float x37, float y37, float x38, float y38, float x39, float y39, float x40, float y40, float x41, float y41, float x42, float y42, float x43, float y43, float x44, float y44, float x45, float y45, float x46, float y46, float x47, float y47, float x48, float y48, float x49, float y49, float x50, float y50, float x51, float y51, float x52, float y52, float x53, float y53, float x54, float y54, float x55, float y55, float x56, float y56, float x57, float y57, float x58, float y58, float x59, float y59, float x60, float y60, float x61, float y61, float x62, float y62, float x63, float y63, float x64, float y64, float x65, float y65) {
     //    println("loading mesh...");  
-    mesh[0].x = x0; 
+    mesh[0].x = x0;
     mesh[0].y = y0;
     mesh[1].x = x1; 
     mesh[1].y = y1;
