@@ -14,11 +14,24 @@ boolean settingIp = true;
 String input = "";
 String myIp = ""; 
 
+PImage bckGrnd;
+PImage hat1;
+PImage hat2;
+boolean inited = false;
+
 void setup() {
   f = createFont("Arial", 18, true);
   size(1200, 480);
   frameRate(30);
 
+  size(displayWidth, displayHeight);
+  float scale = float(displayHeight)/float(displayHeight);
+  scale(scale, scale);
+  float offset = float(displayWidth)/2/scale - float(displayWidth)/2;
+  translate( offset, 0);
+
+  //  bckGrnd = loadImage("clouds.jpg");
+  bckGrnd = loadImage("/data/Squares.png");
 
   try {
     inet = InetAddress.getLocalHost();
@@ -28,27 +41,28 @@ void setup() {
     myIp = "???";
   }
 
-
-
   // Each face owns a global list of projectiles. 
   projsA = new ArrayList<Projectile>();
   projsB = new ArrayList<Projectile>();
 
   // Create both faces, (x, y, direction of projectiles, and their projectile list)
-  a = new Face(0, 0, 7, projsA);
-  b = new Face(500, 0, -7, projsB);
+  a = new Face(0, displayHeight/40, 10, projsA);
+  b = new Face(displayWidth/2, displayHeight/40, -10, projsB);
 
   //  remote = new NetAddress("128.2.251.137", 8338);
 
   oscP5 = new OscP5(this, 8338);
+}
 
+void bindHandlers() {
   oscP5.plug(this, "meshAFound", "/found");
   oscP5.plug(this, "loadMeshA", "/raw");
 
   oscP5.plug(this, "meshBFound", "/foundB");
   oscP5.plug(this, "loadMeshB", "/rawB");
-  
+
   oscP5.plug(this, "setB", "/set");
+  oscP5.plug(this, "reset", "/reset");
 }
 void update() {
   //  print(projs.size());
@@ -56,8 +70,12 @@ void update() {
     Projectile pA = projsA.get(i);
     pA.update();
     if (b.intersect(pA)) {
-//      print("hit!");
-      projsA.remove(i);
+      if (b.isShielded()) {
+        pA.reflect();
+      }
+      else {
+        projsA.remove(i);
+      }
     }
     if (pA.getX() > 1200) {
       projsA.remove(i);
@@ -84,48 +102,19 @@ void update() {
     Projectile pB = projsB.get(i);
     pB.update();
     if (a.intersect(pB)) {
-//      print("hit!");
-      projsB.remove(i);
-      if (pB.getX() < 0) {
+      if (a.isShielded()) {
+        pB.reflect();
+      }
+      else {
         projsB.remove(i);
       }
     }
-  }
-}
-
-
-void draw() {
-  if (settingIp) {
-    background(255);
-    int indent = 25;
-    // Set the font and fill for text
-    textFont(f);
-    fill(0);
-    // Display everything
-    String txt = "Please enter the IP address of the other player\n"+
-      "Your IP address is "+myIp+" \n 'l' for localhost";
-    text(txt, indent, 40);
-    text("->"+input, indent, 150);
-    //    text(saved, indent, 130);
-  } 
-  else {
-
-    update();
-    background(0);
-    stroke(100);
-    a.render();
-    b.render();
-    for (int i = 0; i < projsA.size(); i ++) {
-      Projectile P = projsA.get(i);
-      P.render();
-    }
-//    println(projsB.size());
-    for (int i = 0; i < projsB.size(); i ++) {
-      Projectile P = projsB.get(i);
-      P.render();
+    if (pB.getX() < 0) {
+      projsB.remove(i);
     }
   }
 }
+
 
 void keyPressed() {
   if ((key >= '0' && key <= '9') || key == '.') {
@@ -138,17 +127,25 @@ void keyPressed() {
     if (input.length() > 0 || (input.length() > 1 && input.charAt(0) != '-')) {
       settingIp = false;
       remote = new NetAddress(input, 8338);
+      bindHandlers();
+
       //      convert = true;
     }
     //    size(800, 600);
   }
   else if (key == ' ') {
     a.set();
+    inited = true;
     OscMessage myMessage = new OscMessage("/set");
     oscP5.send(myMessage, remote);
   }
-  else if (key == 'l') {
+  else if (key == 'l' || key == 'L') {
     input = "localhost";
+  }
+  else if (key == 'r') {
+    a.reset();
+    OscMessage myMessage = new OscMessage("/reset");
+    oscP5.send(myMessage, remote);
   }
 }
 
