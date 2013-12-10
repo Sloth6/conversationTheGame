@@ -1,5 +1,7 @@
 public void reset(){
+ a.reset();
  b.reset(); 
+ gameOver = false;
 }
 
 public void setB() {

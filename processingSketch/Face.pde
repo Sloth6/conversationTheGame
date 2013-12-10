@@ -47,7 +47,7 @@ class Face {
   }
 
   void reset() {
-    health = 10;
+    health = 100;
   }
   void set() {
     browNormal = browDis()/h();
