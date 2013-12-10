@@ -26,14 +26,20 @@ class Face {
   float eyeNormal = 0.0;
   //  float nat
 
-  Face(int x, int y, int d, ArrayList<Projectile> PL) {
+  boolean helmets;
+  Face(int x, int y, int d, ArrayList<Projectile> PL, boolean helmets) {
     offX = x;
     offY = y;
     myPrjs = PL;
     this.d = d;
+    this.helmets = helmets; 
     mesh       = new PVector[66];
     meshBuffer = new PVector[66];
-    hat = loadImage("/Helmets/min2.png");
+    if(int(random(2)) == 0) {
+      hat = loadImage("/Helmets/min1.png");
+    } else {
+      hat = loadImage("/Helmets/min2.png");
+    }
     for (int i = 0; i < mesh.length; i++) {
       mesh[i] = new PVector();
       meshBuffer[i] = new PVector();
@@ -41,7 +47,7 @@ class Face {
   }
 
   void reset() {
-    health = 100;
+    health = 10;
   }
   void set() {
     browNormal = browDis()/h();
@@ -66,16 +72,26 @@ class Face {
     int x = P.getX();
     int y = P.getY();
     int r = P.getR();
-
-
-    for (int i = 0; i < 17; i ++) {
-      PVector p = mesh[i];
-      if (abs(x-int(p.x+offX)) < r/2 && abs(y-int(p.y+offY)) < r/2) {
-        if (!this.shielded) {
-          health -=5;
-        }
-        return true;
+    PVector f = mesh[30];
+    float fx = f.x+offX;
+    float fy = f.y+offY;
+    float w;
+    float h;
+    if (this.shielded) {  
+      w = w()*1.5;
+      h = h()*2;
+    } 
+    else {
+      w = w();
+      h = h()*1.5;
+    }
+    float in = (((x-fx)*(x-fx))/(w*w/4)) + (((y-fy)*(y-fy))/(h*h/4));
+    //    ellipse(p.x+offX, p.y+offY, w()*1, h()*1.5);
+    if ( in <= 1) {
+      if (!this.shielded) {
+        health -=5;
       }
+      return true;
     }
     return false;
   }
@@ -107,14 +123,9 @@ class Face {
     int r = int(float(100-health)*.82);
     int g = int(float(100-health)*2.05);
     int b = int(float(100-health)*.88); 
-    int radius = 2;//int(power)+2;
+    int radius = 2;
     int alpha = 155 + int(power); 
-    //    fill(r, g, 0);
     textFont(f);
-
-    //red
-    //    fill(228, 0, 54, 100+power);
-
     //Face Color  
     fill(146+r, 205- g, 142-b);
     noStroke();
@@ -123,8 +134,6 @@ class Face {
     for (int i = 0; i < 17; i++) {
       PVector p = mesh[i];
       vertex(p.x+offX, p.y+offY);
-      //      PVector prev = mesh[i-1];
-      //      line(prev.x+offX, prev.y, p.x+offX, p.y+offY);
     }
     endShape();
     beginShape();
@@ -180,20 +189,59 @@ class Face {
 
     //Shield
     fill(0);
+    PVector p = mesh[30];
+
     if (shielded) {
-      PVector p = mesh[30];
+      //      PVector p = mesh[30];
       stroke(147, 210, 249);
       noFill();
       ellipse(p.x+offX, p.y+offY, w()*1.5, h()*2);
     }
-    if(true) {return;}
-    for (int i = 0; i < mesh.length; i++) {
-      PVector p = mesh[i];
-      text(""+i, p.x+offX, p.y+offY);
-      //
+
+    if (helmets) {
+      PVector n1= mesh[27];
+      PVector n2 = mesh[30];
+      float ro = atan2(n1.y - n2.y, n1.x- n2.x) - 3*PI/2;
+
+      PVector s2 = mesh[16];
+      PVector s1 = mesh[0];
+      float xx = (s1.x + s2.x)/2;
+      float h = h();
+      float yScale = 7*h()/displayHeight;
+      pushMatrix();
+      scale(8*w()/displayWidth, yScale);
+      //    translate(-hat.width/2, -hat.height/2);
+
+      //    translate(xx, s1.y);
+      //    translate(width/2, height/2);
+      //    rotate(ro);
+      //    translate(-hat.width/2, -hat.height/2);
+
+      //    translate(width/4, height/4);
+      //    translate(xx-.8*w(), p.y-2.5*h());
+      //    rotate(ro);
+
+
+
+      translate((xx+offX)/(8*w()/displayWidth), (s1.y-(h/3)+offY)/yScale);
+
+      image(hat, -hat.width/2, -hat.height/2);
+
+      popMatrix();
     }
-    //    image(hat, offX, offY);
-    renderUi();
+
+    //    image(hat,c.x+offX, c.y+offY); 
+
+    //    Draw Numbers
+
+    //    fill(0);
+    //    for (int i = 0; i < mesh.length; i++) {
+    //    PVector q = mesh[i];
+    //    text(""+i, q.x+offX, q.y+offY);
+
+    //    }
+    //    //    image(hat, offX, offY);
+    //    renderUi();
   }
   void makeShape(int a, int b) {
     beginShape();
@@ -268,7 +316,7 @@ class Face {
     norm = sqrt(sq(mesh[30].x-mesh[27].x) + sq(mesh[30].y-mesh[27].y));
     eyesClosed();
     r = abs(int(mesh[64].y-mesh[61].y));
-    if (this.d>0 && mouthOpen() && millis()- lastBlob > fireDelay && power > r) {
+    if (mouthOpen() && millis()- lastBlob > fireDelay && power > r) {
 
       myPrjs.add( new Projectile(int(mesh[64].x+mesh[61].x)/2 + offX, 
       int(mesh[64].y+mesh[61].y)/2 + offY, r, d, -1*browMag()));
@@ -276,8 +324,9 @@ class Face {
       power -= r;
     }
 
-    if (eyesClosed()) {
+    if (eyesClosed() && this.power > 2) {
       shielded = true;
+      this.power -=2;
     }
     else {
       shielded = false;

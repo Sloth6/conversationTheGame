@@ -6,6 +6,10 @@ public void setB() {
   b.set();
 }
 
+void win(){
+  gameOver = true;
+}
+
 
 public void meshAFound(int i) {
   try {

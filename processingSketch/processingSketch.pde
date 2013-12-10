@@ -18,9 +18,10 @@ PImage bckGrnd;
 PImage hat1;
 PImage hat2;
 boolean inited = false;
-
+boolean gameOver = false;
+boolean helmets = false;
 void setup() {
-  f = createFont("Arial", 18, true);
+  f = createFont("Arial", 32, true);
   size(1200, 480);
   frameRate(30);
 
@@ -46,8 +47,8 @@ void setup() {
   projsB = new ArrayList<Projectile>();
 
   // Create both faces, (x, y, direction of projectiles, and their projectile list)
-  a = new Face(0, displayHeight/40, 10, projsA);
-  b = new Face(displayWidth/2, displayHeight/40, -10, projsB);
+  a = new Face(0, displayHeight/40, 10, projsA, helmets);
+  b = new Face(displayWidth/2, displayHeight/40, -10, projsB, helmets);
 
   //  remote = new NetAddress("128.2.251.137", 8338);
 
@@ -63,6 +64,8 @@ void bindHandlers() {
 
   oscP5.plug(this, "setB", "/set");
   oscP5.plug(this, "reset", "/reset");
+  
+  oscP5.plug(this, "win", "/win");
 }
 void update() {
   //  print(projs.size());
@@ -70,14 +73,9 @@ void update() {
     Projectile pA = projsA.get(i);
     pA.update();
     if (b.intersect(pA)) {
-      if (b.isShielded()) {
-        pA.reflect();
-      }
-      else {
-        projsA.remove(i);
-      }
+      projsA.remove(i); 
     }
-    if (pA.getX() > 1200) {
+    if (pA.getX() > displayWidth) {
       projsA.remove(i);
     }
     for (int j = 0; j < projsB.size(); j++) {
@@ -102,19 +100,23 @@ void update() {
     Projectile pB = projsB.get(i);
     pB.update();
     if (a.intersect(pB)) {
-      if (a.isShielded()) {
-        pB.reflect();
-      }
-      else {
-        projsB.remove(i);
-      }
+      projsB.remove(i);
     }
     if (pB.getX() < 0) {
       projsB.remove(i);
     }
   }
+  
+  if(a.health <=0 || b.health <= 0) {
+    handleEnd();
+     
+  }
 }
-
+void handleEnd(){
+  gameOver = true;
+  OscMessage myMessage = new OscMessage("/win");
+  oscP5.send(myMessage, remote);
+}
 
 void keyPressed() {
   if ((key >= '0' && key <= '9') || key == '.') {
@@ -143,6 +145,7 @@ void keyPressed() {
     input = "localhost";
   }
   else if (key == 'r') {
+    gameOver = false;
     a.reset();
     OscMessage myMessage = new OscMessage("/reset");
     oscP5.send(myMessage, remote);
